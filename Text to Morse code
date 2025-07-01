@@ -1,0 +1,89 @@
+Title: Text to Morse code transulation using Ardunio UNO 
+
+const int buzzerPin = 8;
+const int dotDuration = 250; // milliseconds
+const int dashDuration = dotDuration * 3;
+const int letterGap = dotDuration * 3;
+const int wordGap = dotDuration * 7;
+
+// Morse code dictionary (letters and numbers)
+const char* morseCode[] = {
+  ".-",   "-...",  "-.-.", "-..",  ".",    "..-.", "--.",  "....",
+  "..",   ".---",  "-.-",  ".-..", "--",   "-.",   "---",  ".--.",
+  "--.-", ".-.",  "...",  "-",    "..-",  "...-", ".--",  "-..-",
+  "-.--", "--..",
+  "-----", ".----", "..---", "...--", "....-",  ".....", "-....",
+  "--...", "---..", "----."
+};
+
+// Function to play a dot (short beep)
+void dot() {
+  tone(buzzerPin, 1000); // 1000 Hz tone (you can adjust)
+  delay(dotDuration);
+  noTone(buzzerPin);
+  delay(dotDuration);
+}
+
+// Function to play a dash (long beep)
+void dash() {
+  tone(buzzerPin, 1000);
+  delay(dashDuration);
+  noTone(buzzerPin);
+  delay(dotDuration);
+}
+
+// Function to translate a character to Morse code
+void translateCharacter(char character) {
+  int index;
+
+  // Handle uppercase letters (A-Z)
+  if (character >= 'A' && character <= 'Z') {
+    index = character - 'A';
+  }
+  // Handle lowercase letters (a-z)
+  else if (character >= 'a' && character <= 'z') {
+      index = character - 'a';
+  }
+  // Handle numbers (0-9)
+  else if (character >= '0' && character <= '9') {
+    index = character - '0' + 26; // Offset for numbers in the array
+  }
+  //Handle spaces
+    else if (character == ' ') {
+        delay(wordGap);
+        return;
+    }
+  // Handle unknown characters
+  else {
+      return; // Ignore unknown characters
+  }
+
+
+  const char* morse = morseCode[index];
+  for (int i = 0; morse[i] != '\0'; i++) {
+    if (morse[i] == '.') {
+      dot();
+    } else if (morse[i] == '-') {
+      dash();
+    }
+  }
+   delay(letterGap); //Gap between characters
+}
+
+
+void setup() {
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String inputString = Serial.readStringUntil('\n');
+    inputString.toUpperCase(); // Convert input to uppercase for consistency
+
+    for (int i = 0; i < inputString.length(); i++) {
+      translateCharacter(inputString[i]);
+    }
+    Serial.println("Translation complete."); // Indicate completion
+  }
+}
